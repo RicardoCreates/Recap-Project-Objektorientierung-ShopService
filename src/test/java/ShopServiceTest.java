@@ -9,28 +9,47 @@ class ShopServiceTest {
     @Test
     void addOrderTest() {
         //GIVEN
-        ShopService shopService = new ShopService();
+        ProductRepo productRepo = new ProductRepo();
+        OrderRepo orderRepo = new OrderListRepo();
+        ShopService shopService = new ShopService(productRepo, orderRepo);
         List<String> productsIds = List.of("1");
 
         //WHEN
         Order actual = shopService.addOrder(productsIds);
 
         //THEN
-        Order expected = new Order("-1", List.of(new Product("1", "Apfel")));
+        Order expected = new Order(actual.id(), List.of(new Product("1", "Apfel")), OrderStatus.PROCESSING, actual.timestamp());
         assertEquals(expected.products(), actual.products());
-        assertNotNull(expected.id());
+        assertNotNull(actual.id());
+        assertEquals(OrderStatus.PROCESSING, actual.status());
+        assertNotNull(actual.timestamp());
     }
 
     @Test
-    void addOrderTest_whenInvalidProductId_expectNull() {
+    void addOrderTest_whenInvalidProductId_expectException() {
         //GIVEN
-        ShopService shopService = new ShopService();
-        List<String> productsIds = List.of("1", "2");
+        ProductRepo productRepo = new ProductRepo();
+        OrderRepo orderRepo = new OrderListRepo();
+        ShopService shopService = new ShopService(productRepo, orderRepo);
+        List<String> productsIds = List.of("2");
+
+        //WHEN / THEN
+        assertThrows(IllegalArgumentException.class, () -> shopService.addOrder(productsIds));
+    }
+
+    @Test
+    void updateOrderStatusTest() {
+        //GIVEN
+        ProductRepo productRepo = new ProductRepo();
+        OrderRepo orderRepo = new OrderListRepo();
+        ShopService shopService = new ShopService(productRepo, orderRepo);
+        List<String> productsIds = List.of("1");
+        Order order = shopService.addOrder(productsIds);
 
         //WHEN
-        Order actual = shopService.addOrder(productsIds);
+        Order updatedOrder = shopService.updateOrderStatus(order.id(), OrderStatus.COMPLETED);
 
         //THEN
-        assertNull(actual);
+        assertEquals(OrderStatus.COMPLETED, updatedOrder.status());
     }
 }
